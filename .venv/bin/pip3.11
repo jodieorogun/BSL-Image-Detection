@@ -1,4 +1,4 @@
-#!/Users/jodieorogun/BSL-Image-Detection/.venv/bin/python3.11
+#!/Users/jodieorogun/BSL-Image-Detection/.venv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys
