@@ -63,6 +63,7 @@ def loadDataset(debug=False):
 
 
 def train(A, B):
+    global accuracy_value
     X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
     le = LabelEncoder()
     Y_train_enc = le.fit_transform(Y_train)
@@ -72,6 +73,7 @@ def train(A, B):
     Y_pred = model.predict(X_test)
     accuracy = accuracy_score(Y_test_enc, Y_pred)
     print(f"Accuracy: {accuracy * 100:.2f}%")
+    accuracy_value = accuracy
     return model, le
 
 def reshapeImageWithCrop(imagePath):
@@ -88,6 +90,40 @@ def reshapeImageWithCrop(imagePath):
 if __name__ == "__main__":
     X, Y = loadDataset()
     model, le = train(X, Y)
+    with open("accuracy.txt", "w") as f:
+        f.write(f"accuracy: {accuracy_value * 100} \n")  
     pred = model.predict(reshapeImageWithCrop("my_predictionB.png"))
     predLabel = le.inverse_transform(pred)
     print(f"Predicted label: {predLabel}")
+
+    cap = cv2.VideoCapture(0)  
+    if not cap.isOpened():
+        print("Could not open webcam")
+    else:
+        while True:
+            ok, frame = cap.read()
+            if not ok:
+                break
+
+            feat = reshapeImageWithCrop(frame)
+            if feat is not None:
+                pred = model.predict(feat)
+                label = le.inverse_transform(pred)[0]
+                text = f"Pred: {label}"
+                color = (0, 255, 0)
+            else:
+                text = "no hands"
+                color = (0, 0, 255)
+
+            # overlay text
+            cv2.putText(frame, text, (12, 32), cv2.FONT_HERSHEY_SIMPLEX, 1.0, color, 2, cv2.LINE_AA)
+
+            # show the live feed
+            cv2.imshow("BSL Live", frame)
+
+            # quit with 'q'
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+        cap.release()
+        cv2.destroyAllWindows()
