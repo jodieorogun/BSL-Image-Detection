@@ -87,6 +87,17 @@ def reshapeImageWithCrop(imagePath):
     arr = arr.reshape(1, -1)
     return normalize(arr, norm='l2')
 
+def reshapeFrameWithCrop(frame):
+    rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    image = Image.fromarray(rgb)
+    crop = bothHandsCrop(image) 
+    if crop is None:
+        return None
+    crop = crop.resize((128, 128))
+    crop = crop.convert("L")
+    arr = np.asarray(crop, dtype=np.float32).flatten().reshape(1, -1)
+    return normalize(arr, norm='l2')
+
 if __name__ == "__main__":
     X, Y = loadDataset()
     model, le = train(X, Y)
@@ -105,7 +116,7 @@ if __name__ == "__main__":
             if not ok:
                 break
 
-            feat = reshapeImageWithCrop(frame)
+            feat = reshapeFrameWithCrop(frame)
             if feat is not None:
                 pred = model.predict(feat)
                 label = le.inverse_transform(pred)[0]
