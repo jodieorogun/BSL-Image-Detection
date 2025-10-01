@@ -9,6 +9,8 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import normalize 
+from joblib import dump, load  
+
 
 mpHands = mp.solutions.hands
 
@@ -99,13 +101,23 @@ def reshapeFrameWithCrop(frame):
     return normalize(arr, norm='l2')
 
 if __name__ == "__main__":
-    X, Y = loadDataset()
-    model, le = train(X, Y)
-    with open("accuracy.txt", "w") as f:
-        f.write(f"accuracy: {accuracy_value * 100} \n")  
-    pred = model.predict(reshapeImageWithCrop("my_predictionB.png"))
-    predLabel = le.inverse_transform(pred)
-    print(f"Predicted label: {predLabel}")
+    modelPath = Path("model.joblib")
+    lePath = Path("label_encoder.joblib")
+    if modelPath.exists() and lePath.exists():
+        model = load(modelPath)
+        le = load(lePath)
+        print("Model and label encoder loaded from disk.")
+    else:
+        X, Y = loadDataset()
+        model, le = train(X, Y)
+        dump(model, modelPath)
+        dump(le, lePath)
+        with open("accuracy.txt", "w") as f:
+            f.write(f"accuracy: {accuracy_value * 100} \n")  
+    
+        pred = model.predict(reshapeImageWithCrop("my_predictionB.png"))
+        predLabel = le.inverse_transform(pred)
+        print(f"Predicted label: {predLabel}")
 
     cap = cv2.VideoCapture(0)  
     if not cap.isOpened():
